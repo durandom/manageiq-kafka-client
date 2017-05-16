@@ -4,7 +4,7 @@ logger = Logger.new(STDOUT)
 
 kafka = Kafka.new(
     seed_brokers: ["apache-kafka:9092"],
-    logger: logger,
+    # logger: logger,
     client_id: "miq-persister",
 )
 

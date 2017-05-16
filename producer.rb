@@ -1,36 +1,40 @@
 require "kafka"
 logger = Logger.new(STDOUT)
 kafka = Kafka.new(
-  # At least one of these nodes must be available:
   seed_brokers: ["localhost:9092"],
   logger: logger,
-  # Set an optional client id in order to identify the client to Kafka:
-  # client_id: "my-application",
 )
 
-# `#async_producer` will create a new asynchronous producer.
-producer = kafka.async_producer
 
-# The `#produce` API works as normal.
-producer.produce("hello", topic: "greetings")
+def produce_async(kafka)
+  producer = kafka.async_producer
+  producer.deliver_messages
 
-# `#deliver_messages` will return immediately.
-producer.deliver_messages
+  # The consumer can be stopped from the command line by executing
+  # `kill -s QUIT <process-id>`.
+  trap("QUIT") { producer.shutdown }
 
-# Make sure to call `#shutdown` on the producer in order to avoid leaking
-# resources. `#shutdown` will wait for any pending messages to be delivered
-# before returning.
-producer.shutdown
+  while true
+    msg = Time.now.to_f.to_s
+    producer.produce(msg, topic: "inventory")
+    puts msg
+    sleep 1
+  end
+end
 
-# producer = kafka.producer
-# Add a message to the producer buffer.
-# producer.produce("hello1", topic: "test-messages")
+def produce_sync(kafka)
+  producer = kafka.producer
 
-# Deliver the messages to Kafka.
-# producer.deliver_messages
+  trap("QUIT") { exit }
 
-# kafka.each_message(topic: "funky") do |message|
-#   puts message.offset, message.key, message.value
-# end
-# kafka.deliver_message("Hello, World!", topic: "funky")
+  while true do
+    msg = Time.now.to_f.to_s
+    producer.produce(msg, topic: "inventory")
+    producer.deliver_messages
+    puts msg
+    # sleep 1
+  end
 
+end
+
+produce_sync(kafka)
