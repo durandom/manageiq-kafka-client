@@ -1,5 +1,3 @@
-#!/bin/env ruby
-
 require 'kafka'
 
 logger = Logger.new(STDOUT)

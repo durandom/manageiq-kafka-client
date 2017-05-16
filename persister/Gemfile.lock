@@ -1,0 +1,14 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    ruby-kafka (0.3.17)
+
+PLATFORMS
+  ruby
+  x86_64-darwin-16
+
+DEPENDENCIES
+  ruby-kafka
+
+BUNDLED WITH
+   1.14.6
