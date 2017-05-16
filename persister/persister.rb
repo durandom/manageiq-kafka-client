@@ -8,12 +8,9 @@ kafka = Kafka.new(
     client_id: "miq-persister",
 )
 
-kafka.each_message(topic: "greetings") do |message|
-  p "#{message.topic}, #{message.partition}, #{message.offset}, #{message.key}, #{message.value}"
-end
 
-# consumer = kafka.consumer(group_id: "my-consumer")
-# consumer.subscribe("greetings")
-# consumer.each_message do |message|
-#   p message
-# end
+consumer = kafka.consumer(group_id: "miq-persisters")
+consumer.subscribe("inventory")
+consumer.each_message do |message|
+  p message
+end
