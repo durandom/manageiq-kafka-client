@@ -1,9 +1,13 @@
 # login to internal registry
 
+```bash
 eval $(minishift docker-env)
 docker login -u developer -p $(oc whoami -t) $(minishift openshift registry)
+```
 
 # decoding secrets
+```bash
+
 ❯ oc get secret manageiq-secrets -o yaml
 apiVersion: v1
 data:
@@ -24,3 +28,4 @@ type: Opaque
 ~/src/manageiq-dos/minishift master*
 ❯ echo Z3VYTExDQTU= | base64 --decode
 guXLLCA5
+```
