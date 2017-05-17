@@ -1,0 +1,85 @@
+apiVersion: v1
+kind: Template
+labels:
+  template: manageiq-inventory
+metadata:
+  name: manageiq-inventory
+  annotations:
+    description: "ManageIQ Inventory service"
+    tags: "instant-app,manageiq,miq,inventory-service"
+    iconClass: "icon-rails"
+objects:
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    name: manageiq-inventory
+    annotations:
+      description: "Keeps track of the ManageIQ image changes"
+  spec: {}
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    creationTimestamp: null
+    name: ${NAME}
+  spec:
+    replicas: 1
+    selector:
+      name: ${NAME}
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: ${NAME}
+      spec:
+        containers:
+        - capabilities: {}
+          env:
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: "manageiq-secrets"
+                key: pg-password
+          image: ' '
+          imagePullPolicy: IfNotPresent
+          name: manageiq-inventory
+        restartPolicy: Always
+    triggers:
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - manageiq-inventory
+        from:
+          kind: ImageStreamTag
+          name: manageiq-inventory:latest
+        lastTriggeredImage: ""
+      type: ImageChange
+    - type: ConfigChange
+  status: {}
+parameters:
+  -
+    name: "NAME"
+    displayName: Name
+    required: true
+    description: "The name assigned to all of the frontend objects defined in this template."
+    value: manageiq-inventory
+  -
+    name: "DATABASE_SERVICE_NAME"
+    displayName: "PostgreSQL Service Name"
+    required: true
+    description: "The name of the OpenShift Service exposed for the PostgreSQL container."
+    value: "postgresql"
+  -
+    name: "DATABASE_USER"
+    displayName: "PostgreSQL User"
+    required: true
+    description: "PostgreSQL user that will access the database."
+    value: "root"
+  -
+    name: "DATABASE_NAME"
+    required: true
+    displayName: "PostgreSQL Database Name"
+    description: "Name of the PostgreSQL database accessed."
+    value: "vmdb_production"
+

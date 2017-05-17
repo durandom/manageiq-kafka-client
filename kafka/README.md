@@ -7,7 +7,7 @@
 
 ```bash
 # get the pod name
-KAFKA_POD=$(oc get pods -l app=apache-kafka -o custom-columns=NAME:.metadata.name | tail -n 1)
+KAFKA_POD=$(oc get pods -l app=apache-kafka -o jsonpath={.items..metadata.name})
 echo $KAFKA_POD
 
 # create a topic
