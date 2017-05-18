@@ -60,7 +60,10 @@ manageiq-kafka-client/kafka/create_topic.sh
 ## Setup redis service
 
 ```bash
-manageiq-kafka-client/redis/up.sh
+cd manageiq-kafka-client/redis
+./up.sh
+# monitor inventory and collectors
+watch bundle exec ruby status.rb
 ```
 
 ## Create Inventory service
