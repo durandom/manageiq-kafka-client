@@ -3,9 +3,12 @@ require 'redis'
 require 'json'
 
 logger = Logger.new(STDOUT)
-redis_host = ENV['REDIS_HOST'] || 'redis'
-redis_port = ENV['REDIS_PORT'] || 6379
+redis_host = ENV['REDIS_SERVICE_HOST']
+redis_port = ENV['REDIS_SERVICE_PORT']
+redis_password = ENV['REDIS_PASSWORD']
+
 sleep_max = ENV['SLEEP_MAX']
+pod = ENV['HOSTNAME']
 
 kafka = Kafka.new(
     seed_brokers: ["apache-kafka:9092"],
@@ -13,8 +16,7 @@ kafka = Kafka.new(
     client_id: "miq-persister",
 )
 
-# FIXME: make that configurable
-redis = Redis.new(:password => "qik48IoStyJr8Rxi", :host => redis_host, :port => redis_port)
+redis = Redis.new(:password => redis_password, :host => redis_host, :port => redis_port)
 
 consumer = kafka.consumer(group_id: "miq-persisters")
 consumer.subscribe("inventory")
@@ -30,8 +32,13 @@ consumer.each_message do |message|
   ems = msg['ems']
   counter = msg['counter']
 
-  # x = redis.incr(key)
+  redis.incr(pod)
+  redis.incr(ems)
+  redis.rpush("log_#{ems}", counter)
+  redis.rpush("log_#{pod}_#{ems}", counter)
+
   puts "#{Time.now}: (ems: #{ems}) #{counter}"
+
   STDOUT.flush
 
   # next unless sleep_max

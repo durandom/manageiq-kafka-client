@@ -41,6 +41,11 @@ objects:
               secretKeyRef:
                 name: "manageiq-secrets"
                 key: pg-password
+          - name: REDIS_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: redis
+                key: database-password
           image: ' '
           imagePullPolicy: IfNotPresent
           name: manageiq-inventory

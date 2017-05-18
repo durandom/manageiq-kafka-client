@@ -20,18 +20,18 @@ objects:
   kind: DeploymentConfig
   metadata:
     creationTimestamp: null
-    name: ${NAME}
+    name: manageiq-collector-${NAME}
   spec:
     replicas: 1
     selector:
-      name: ${NAME}
+      name: manageiq-collector-${NAME}
     strategy:
       type: Recreate
     template:
       metadata:
         creationTimestamp: null
         labels:
-          name: ${NAME}
+          name: manageiq-collector-${NAME}
       spec:
         containers:
         - capabilities: {}
@@ -60,7 +60,7 @@ parameters:
     displayName: Name
     required: true
     description: "The name assigned to all of the frontend objects defined in this template."
-    value: manageiq-collector
+    value: ems
   -
     name: EMS_ID
     description: Id of EMS

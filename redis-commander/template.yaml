@@ -16,7 +16,7 @@ items:
   - name: IMAGE
     description: Image with redis commander
     required: true
-    value: tenstartups/redis-commander
+    value: higebu/redis-commander
   objects:
   - apiVersion: v1
     kind: DeploymentConfig
@@ -35,7 +35,10 @@ items:
           - name: redis-commander
             image: ${IMAGE}
             args:
-            - --redis-host redis
+            - --redis-host
+            - 172.30.5.145
+            - --redis-password
+            - qik48IoStyJr8Rxi
             ports:
             - containerPort: 8081
   - apiVersion: v1
@@ -44,7 +47,7 @@ items:
       name: ${NAME}
     spec:
       ports:
-      - name: ui
+      - name: http
         port: 8081
       selector:
         deploymentconfig: ${NAME}
@@ -55,9 +58,13 @@ items:
     spec:
       port:
         targetPort: http
-      tls:
-        termination: passthrough
       to:
         kind: Service
         name: ${NAME}
-
+parameters:
+  -
+    name: "NAME"
+    displayName: Name
+    required: true
+    description: "Name of the app"
+    value: redis-commander
