@@ -1,5 +1,11 @@
 require 'kafka'
 require 'json'
+require 'redis'
+
+redis_host = ENV['REDIS_SERVICE_HOST']
+redis_port = ENV['REDIS_SERVICE_PORT']
+redis_password = ENV['REDIS_PASSWORD']
+$redis = Redis.new(:password => redis_password, :host => redis_host, :port => redis_port)
 
 kafka_broker = ENV['KAFKA_BROKER'] || 'apache-kafka:9092'
 $producer = Kafka.new(seed_brokers: [kafka_broker]).producer(compression_codec: :gzip)
@@ -8,9 +14,22 @@ def send_or_update(ems, persister, count, batch_size)
   if count == :rest || count > batch_size
     inventory_yaml = persister.to_yaml
 
-    puts "sending inventory to kafka, #{inventory_yaml.size} bytes"
-    $producer.produce(inventory_yaml, topic: 'inventory')
+    $batch_counter += 1
+    puts "sending inventory batch #{$batch_counter} to kafka, #{inventory_yaml.size} bytes"
+    msg = {
+        job: $counter,
+        batch: $batch_counter,
+        ems: $ems,
+        time: Time.now.to_f,
+        data: inventory_yaml
+    }
+
+    payload = JSON.generate(msg)
+    $producer.produce(payload, topic: 'inventory')
     $producer.deliver_messages
+
+    key = "job_#{$ems}_#{$counter}"
+    $redis.rpush key, msg[:time]
 
     # And and create new persistor so the old one with data can be GCed
     return_persister = ManageIQ::Providers::Amazon::Inventory::Persister::StreamedData.new(
@@ -151,15 +170,22 @@ end
 
 ems = ENV['EMS'] || rand(1000)
 ExtManagementSystem.find_by(:name => ems) || ManageIQ::Providers::Amazon::CloudManager.create!(:name => ems, :hostname => 'localhost', provider_region: 'us-east-1', zone: Zone.first)
-counter = 0
+$counter = 0
+$ems = ems
 while true do
+  $counter += 1
+  $batch_counter = 0
   generate_batches_od_data(:ems_name => ems, :total_elements => 1234)
-  counter += 1
   # msg = {ems: ems, counter: counter}
   # msg = JSON.generate(msg)
   # producer.produce(msg, topic: "inventory")
   # producer.deliver_messages
-  puts "#{Time.now}: (ems: #{ems}) #{counter}"
+  puts "#{Time.now}: (ems: #{ems}) #{$counter}"
   STDOUT.flush
-  sleep 5
+  if $counter == 2
+    puts "done - sleep for 1 day"
+    sleep 24.hours
+  else
+    sleep 120
+  end
 end
