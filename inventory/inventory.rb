@@ -59,7 +59,7 @@ consumer.each_message do |message|
   redis.rpush("job_done_#{key}", msg['time'])
   redis.rpush("job_done_batch_#{key}", msg['batch'])
   redis.rpush("job_save_time_#{key}" , time)
-  redis.rpush("log_#{pod}_#{msg['ems']}", counter)
+  # redis.rpush("log_#{pod}_#{msg['ems']}", counter)
   STDOUT.flush
 
   # next unless sleep_max
