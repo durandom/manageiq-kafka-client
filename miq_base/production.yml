@@ -1,0 +1,2 @@
+:session:
+  :memcache_server: memcached:11211
