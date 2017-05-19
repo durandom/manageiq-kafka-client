@@ -2,7 +2,7 @@ require 'kafka'
 require 'json'
 
 kafka_broker = ENV['KAFKA_BROKER'] || 'apache-kafka:9092'
-$producer = Kafka.new(seed_brokers: [kafka_broker]).producer
+$producer = Kafka.new(seed_brokers: [kafka_broker]).producer(compression_codec: :gzip)
 
 def send_or_update(ems, persister, count, batch_size)
   if count == :rest || count > batch_size
@@ -129,7 +129,7 @@ def parse_key_pair(index, persister)
   )
 end
 
-def generate_batches_od_data(ems_name:, total_elements:, batch_size: 10)
+def generate_batches_od_data(ems_name:, total_elements:, batch_size: 1000)
   ems       = ExtManagementSystem.find_by(:name => ems_name)
   persister = ManageIQ::Providers::Amazon::Inventory::Persister::StreamedData.new(
     ems, ems
