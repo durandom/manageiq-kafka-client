@@ -2,7 +2,7 @@ require 'kafka'
 require 'redis'
 require 'json'
 
-logger = Logger.new(STDOUT)
+logger = Logger.new(STDOUT, level: :info)
 redis_host = ENV['REDIS_SERVICE_HOST']
 redis_port = ENV['REDIS_SERVICE_PORT']
 redis_password = ENV['REDIS_PASSWORD']
@@ -12,14 +12,17 @@ pod = ENV['HOSTNAME']
 
 kafka = Kafka.new(
     seed_brokers: ["apache-kafka:9092"],
-    # logger: logger,
+    logger: logger,
     client_id: "miq-persister",
 )
 
 redis = Redis.new(:password => redis_password, :host => redis_host, :port => redis_port)
 
-consumer = kafka.consumer(group_id: "miq-persisters")
-consumer.subscribe("inventory")
+consumer = kafka.consumer(
+    group_id: "miq-persisters",
+    session_timeout: 240,
+)
+consumer.subscribe("inventory", start_from_beginning: false)
 
 counter = 0
 consumer.each_message do |message|
@@ -56,6 +59,8 @@ consumer.each_message do |message|
 
   redis.incr(pod)
   redis.incr(msg['ems'])
+  redis.rpush("job_start_#{key}", start)
+  redis.rpush("job_end_#{key}", Time.now.to_f)
   redis.rpush("job_done_#{key}", msg['time'])
   redis.rpush("job_done_batch_#{key}", msg['batch'])
   redis.rpush("job_save_time_#{key}" , time)

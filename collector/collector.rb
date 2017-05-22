@@ -8,7 +8,8 @@ redis_password = ENV['REDIS_PASSWORD']
 $redis = Redis.new(:password => redis_password, :host => redis_host, :port => redis_port)
 
 kafka_broker = ENV['KAFKA_BROKER'] || 'apache-kafka:9092'
-$producer = Kafka.new(seed_brokers: [kafka_broker]).producer(compression_codec: :gzip)
+logger = Logger.new(STDOUT, level: :info)
+$producer = Kafka.new(seed_brokers: [kafka_broker], logger: logger).producer(compression_codec: :gzip)
 
 def send_or_update(ems, persister, count, batch_size)
   if count == :rest || count > batch_size
@@ -148,7 +149,7 @@ def parse_key_pair(index, persister)
   )
 end
 
-def generate_batches_od_data(ems_name:, total_elements:, batch_size: 1000)
+def generate_batches_od_data(ems_name:, total_elements:, batch_size: 250)
   ems       = ExtManagementSystem.find_by(:name => ems_name)
   persister = ManageIQ::Providers::Amazon::Inventory::Persister::StreamedData.new(
     ems, ems
@@ -181,11 +182,13 @@ while true do
   # producer.produce(msg, topic: "inventory")
   # producer.deliver_messages
   puts "#{Time.now}: (ems: #{ems}) #{$counter}"
-  STDOUT.flush
   if $counter == 2
     puts "done - sleep for 1 day"
+    STDOUT.flush
     sleep 24.hours
   else
-    sleep 120
+    puts "sleeping 240 seconds"
+    STDOUT.flush
+    sleep 240
   end
 end

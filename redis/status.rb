@@ -28,6 +28,12 @@ s = Hash.new {|h, k| h[k] = Hash.new{|x,y| x[y] = {} } }
 
 redis.keys("*").each do |key|
   case key
+    when /^job_start/
+      key =~ /job_start_([^_]*)_(\d+)/
+      s[:job_start][$1][$2] = redis.lrange key, 0, -1
+    when /^job_end/
+      key =~ /job_end_([^_]*)_(\d+)/
+      s[:job_end][$1][$2] = redis.lrange key, 0, -1
     when /^job_save_time/
       key =~ /job_save_time_([^_]*)_(\d+)/
       s[:job_save_time][$1][$2] = redis.lrange key, 0, -1
@@ -60,7 +66,10 @@ heading "Jobs saving Time"
 s[:job_save_time].sort.each do |k, v|
   puts "Collector #{k}"
   v.sort.each do |x, y|
-    puts " job #{x}: #{y.map(&:to_f).sum.to_i} seconds"
+    start = Array(s[:job_start][k][x]).min
+    finish = Array(s[:job_end][k][x]).max
+    wall_time = finish.to_f - start.to_f
+    puts " job #{x}: #{y.map(&:to_f).sum.to_i} s - #{wall_time.to_i} wall s"
   end
 end
 
