@@ -48,6 +48,8 @@ objects:
                 key: database-password
           - name: EMS
             value: "${NAME}"
+          - name: BATCH_SIZE
+            value: "${BATCH_SIZE}"
           image: ' '
           imagePullPolicy: IfNotPresent
           name: manageiq-collector
@@ -71,6 +73,11 @@ parameters:
     required: true
     description: "The name assigned to all of the frontend objects defined in this template."
     value: ems
+  -
+    name: BATCH_SIZE
+    description: Batch Size for inv collection sent via kafka
+    displayName: Batch Size for inv collection
+    value: "1000"
   -
     name: EMS_ID
     description: Id of EMS

@@ -9,6 +9,7 @@ $redis = Redis.new(:password => redis_password, :host => redis_host, :port => re
 
 kafka_broker = ENV['KAFKA_BROKER'] || 'apache-kafka:9092'
 logger = Logger.new(STDOUT, level: :info)
+logger = Logger.new(nil)
 $producer = Kafka.new(seed_brokers: [kafka_broker], logger: logger).producer(compression_codec: :gzip)
 
 def send_or_update(ems, persister, count, batch_size)
@@ -149,7 +150,7 @@ def parse_key_pair(index, persister)
   )
 end
 
-def generate_batches_od_data(ems_name:, total_elements:, batch_size: 250)
+def generate_batches_od_data(ems_name:, total_elements:, batch_size: 1000)
   ems       = ExtManagementSystem.find_by(:name => ems_name)
   persister = ManageIQ::Providers::Amazon::Inventory::Persister::StreamedData.new(
     ems, ems
@@ -176,7 +177,7 @@ $ems = ems
 while true do
   $counter += 1
   $batch_counter = 0
-  generate_batches_od_data(:ems_name => ems, :total_elements => 1234)
+  generate_batches_od_data(:ems_name => ems, :total_elements => 1234, batch_size: ENV['BATCH_SIZE'].to_i || 1000)
   # msg = {ems: ems, counter: counter}
   # msg = JSON.generate(msg)
   # producer.produce(msg, topic: "inventory")

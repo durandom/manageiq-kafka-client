@@ -3,6 +3,7 @@ require 'redis'
 require 'json'
 
 logger = Logger.new(STDOUT, level: :info)
+logger = Logger.new(nil)
 redis_host = ENV['REDIS_SERVICE_HOST']
 redis_port = ENV['REDIS_SERVICE_PORT']
 redis_password = ENV['REDIS_PASSWORD']
@@ -36,7 +37,7 @@ consumer.each_message do |message|
   counter += 1
   key = "#{msg['ems']}_#{msg['job']}"
   delay = Time.now.to_f - Float(msg['time'])
-  puts "Received inventory #{key}, batch #{msg['batch']} - delay: #{delay}"
+  puts "Received inventory #{key}, partition #{message.partition}, batch #{msg['batch']}, delay: #{delay}"
   begin
     persister = ManagerRefresh::Inventory::Persister.from_yaml(msg['data'])
   rescue => e
